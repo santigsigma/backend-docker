@@ -1,0 +1,246 @@
+═══════════════════════════════════════════════════════════════════════════
+    🚀 COMANDO RÁPIDO PARA WINDOWS PowerShell (Copiar y Pegar)
+═══════════════════════════════════════════════════════════════════════════
+
+Estamos en Windows. Estos son los comandos EXACTOS para ejecutar.
+
+═══════════════════════════════════════════════════════════════════════════
+PASO 1: Abrir PowerShell como Administrator
+═══════════════════════════════════════════════════════════════════════════
+
+  ✓ Windows + X → Windows PowerShell (Admin)
+    O
+  ✓ WIN → buscar "PowerShell" → Click derecho → "Run as administrator"
+
+═══════════════════════════════════════════════════════════════════════════
+PASO 2: Navegar a la carpeta del proyecto
+═══════════════════════════════════════════════════════════════════════════
+
+Copiar y pegar en PowerShell:
+
+  cd "$env:USERPROFILE\Downloads\death2\backend-docker"
+
+Presionar ENTER.
+
+Verificar que estamos en la carpeta correcta:
+  pwd
+
+Debe mostrar:
+  Path
+  ----
+  C:\Users\BIG SHOT\Downloads\death2\backend-docker
+
+═══════════════════════════════════════════════════════════════════════════
+PASO 3: OPCIÓN A - Ejecutar Node.js (Recomendado para principiantes)
+═══════════════════════════════════════════════════════════════════════════
+
+Copiar y pegar esto:
+
+  docker-compose -f docker-compose.node.yml up --build
+
+Esto va a:
+  1. Descargar MySQL 8.0 image (~500 MB - primera vez)
+  2. Descargar Node 20 image (~400 MB - primera vez)
+  3. Compilar código Node.js
+  4. Levantar MySQL container
+  5. Esperar que MySQL esté listo
+  6. Levantar API Node.js container
+  7. Mostrar logs en tiempo real
+
+Esperar hasta ver:
+
+  🚀 Server running at http://0.0.0.0:8080
+
+Cuando veas eso = ✅ ESTÁ LISTO
+
+═══════════════════════════════════════════════════════════════════════════
+PASO 4: Probar que funciona (en OTRA ventana PowerShell)
+═══════════════════════════════════════════════════════════════════════════
+
+Abrir OTRA ventana PowerShell (no cerrar la anterior).
+
+En la nueva ventana, pegar ESTO POR UNO:
+
+TEST 1: ¿El API está vivo?
+  curl http://localhost:8080/health
+
+Respuesta esperada:
+  {
+    "status": "API is running",
+    "timestamp": "2024-05-25T14:32:15.123Z"
+  }
+
+TEST 2: ¿Se conecta a BD?
+  curl http://localhost:8080/db-status
+
+Respuesta esperada:
+  {
+    "connection": true,
+    "db_time": "2024-05-25 14:32:15"
+  }
+
+TEST 3: ¿Hay items en BD?
+  curl http://localhost:8080/items
+
+Respuesta esperada:
+  {
+    "items": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "nombre": "Example Item 1",
+        "created_at": "2024-05-25T12:00:00.000Z"
+      },
+      ...
+    ],
+    "total": 3
+  }
+
+TEST 4: ¿Puedo crear un nuevo item?
+  curl -X POST http://localhost:8080/items `
+    -H "Content-Type: application/json" `
+    -d '{"nombre": "Mi primer item"}'
+
+Respuesta esperada (HTTP 201):
+  {
+    "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "nombre": "Mi primer item",
+    "created_at": "2024-05-25T14:35:22.456Z"
+  }
+
+Si viste todos ✅ = PROYECTO FUNCIONA 100%
+
+═══════════════════════════════════════════════════════════════════════════
+PASO 5: PARAR el proyecto
+═══════════════════════════════════════════════════════════════════════════
+
+En la ventana donde escribiste "docker-compose up" (la que mostró logs):
+
+Presionar: CTRL + C
+
+Esperar a que se apague.
+
+Completamente seguro detener.
+
+═══════════════════════════════════════════════════════════════════════════
+ALTERNATIVAS
+═══════════════════════════════════════════════════════════════════════════
+
+Si quieres probar RUST en lugar de Node.js:
+
+  docker-compose -f docker-compose.rust.yml up --build
+
+  (Mismos pasos, pero compila Rust - tarda 2-3 minutos la primera vez)
+
+═══════════════════════════════════════════════════════════════════════════
+
+Si quieres ejecutar AMBOS simultáneamente (para benchmarks):
+
+  docker-compose -f docker-compose.comparacion.yml up --build
+
+  Entonces:
+  • Node.js: http://localhost:8080
+  • Rust: http://localhost:8081
+
+═══════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING RÁPIDO (Windows PowerShell)
+═══════════════════════════════════════════════════════════════════════════
+
+Error: "docker-compose: The term 'docker-compose' is not recognized"
+
+  → Docker Desktop no está instalado o no en PATH
+  → Instalar: https://www.docker.com/products/docker-desktop
+  → Reiniciar PowerShell después
+
+─────────────────────────────────────────────────────────────────────────
+
+Error: "Port 3306 is already allocated"
+
+  → Ya hay otro MySQL corriendo
+  → Solución:
+    docker ps                          (ver containers)
+    docker stop <container_id>         (detener)
+    docker-compose up --build          (reintentar)
+
+─────────────────────────────────────────────────────────────────────────
+
+Error: "Cannot connect to /var/run/docker.sock"
+
+  → Docker daemon no está corriendo
+  → Abrir "Docker Desktop" app (buscar en Windows)
+  → Esperar a que inicie
+  → Intentar de nuevo
+
+─────────────────────────────────────────────────────────────────────────
+
+Error: "Error creating pool: ... Unable to connect"
+
+  → MySQL aún no está listo
+  → El docker-compose espera 30 segundos automáticamente
+  → Si sigue fallando, esperar más:
+    docker-compose logs mysql          (ver logs MySQL)
+
+─────────────────────────────────────────────────────────────────────────
+
+Si nada funciona: Reset completo
+
+  docker-compose down -v              (borra todo incluyendo datos)
+  docker-compose -f docker-compose.node.yml up --build
+
+═══════════════════════════════════════════════════════════════════════════
+INFORMACIÓN ÚTIL
+═══════════════════════════════════════════════════════════════════════════
+
+Ver containers corriendo:
+  docker ps
+
+Ver logs del API:
+  docker logs backend-node
+
+Ver logs de MySQL:
+  docker logs db-mysql
+
+Entrar al container Node.js:
+  docker exec -it backend-node sh
+
+Entrar a MySQL:
+  docker exec -it db-mysql mysql -u root -p
+
+  (Contraseña: mysecurepassword)
+
+  Luego escribir:
+    USE dbapp;
+    SELECT * FROM items;
+    EXIT;
+
+═══════════════════════════════════════════════════════════════════════════
+TIEMPO ESPERADO (Primera vez)
+═══════════════════════════════════════════════════════════════════════════
+
+Node.js:
+  • Download images: 2-5 minutos (depende internet)
+  • Build Node.js: 30 segundos
+  • Startup MySQL: 10 segundos
+  • Startup API: 5 segundos
+  ─────────────────
+  TOTAL: ~3-6 minutos primera vez. Luego: 15 segundos
+
+Rust (si quieres probar):
+  • Download images: 2-5 minutos
+  • Compile Rust: 2-3 minutos ← AQUÍ TARDA
+  • Startup MySQL: 10 segundos
+  • Startup API: 5 segundos
+  ─────────────────
+  TOTAL: ~5-10 minutos primera vez. Luego: 1 minuto (recompila)
+
+═══════════════════════════════════════════════════════════════════════════
+PRÓXIMOS PASOS
+═══════════════════════════════════════════════════════════════════════════
+
+Después de verificar que funciona:
+
+  1. Leer: 00-LEEME-PRIMERO.md
+  2. Leer: EXPLICACION_NODE.md (explicar a compañeros)
+  3. Leer: COMPARACION_STACKS.md (argumentar en presentación)
+  4. Preparar demostración en vivo
+
+═══════════════════════════════════════════════════════════════════════════
