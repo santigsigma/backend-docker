@@ -1,12 +1,15 @@
 cd ~/backend-docker
-echo "DB_USER=appuser
-DB_PASSWORD=mysecurepassword
-DB_NAME=dbapp" > .env
-docker compose up --build -d
-docker compose ps
+docker network create app-network
+docker run -d --name db-mysql --network app-network -e MYSQL_ROOT_PASSWORD=mysecurepassword -e MYSQL_DATABASE=dbapp -e MYSQL_USER=appuser -e MYSQL_PASSWORD=mysecurepassword -p 3307:3306 -v $(pwd)/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql mysql:8.0
+docker build -t backend-rust ./rust-actix
+sleep 15
+docker run -d --name backend-rust --network app-network -e APP_HOST=0.0.0.0 -e APP_PORT=8080 -e DB_HOST=db-mysql -e DB_PORT=3306 -e DB_USER=appuser -e DB_PASSWORD=mysecurepassword -e DB_NAME=dbapp -e RUST_LOG=info -p 8080:8080 backend-rust
+docker ps
 curl http://localhost:8080/health
 curl http://localhost:8080/db-status
 curl http://localhost:8080/items
 curl -X POST http://localhost:8080/items -H "Content-Type: application/json" -d '{"nombre":"Item creado en clase"}'
 curl http://localhost:8080/items
-docker compose down
+docker stop backend-rust db-mysql
+docker rm backend-rust db-mysql
+docker network rm app-network

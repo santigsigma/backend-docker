@@ -1,0 +1,276 @@
+================================================================================
+    PERSONA 1 — "El Lenguaje y la Infra"
+    Tecnologías: 🦀 RUST + 🐳 DOCKER
+================================================================================
+
+Tu rol: Vos arrancás la presentación. Explicás POR QUÉ elegimos Rust
+y CÓMO se empaqueta todo con Docker. Le das al público el contexto
+general antes de que tu compañero muestre cómo funciona.
+
+Orden de tu exposición:
+  1. Introducción (arrancás vos)
+  2. Rust (el lenguaje)
+  3. Docker (contenedores)
+  4. Multi-stage build (optimización de imagen)
+  → Luego le pasás la palabra a tu compañero.
+
+
+================================================================================
+TU PARTE 1 — INTRODUCCIÓN (2 minutos)
+================================================================================
+
+[DECIR]:
+"Buenas tardes/días. Hoy les vamos a presentar nuestro proyecto: una API REST
+construida con Rust y Actix Web, que corre dentro de contenedores Docker y se
+conecta a una base de datos MySQL."
+
+"¿Qué es una API REST? Es un servicio que vive en un servidor y responde a
+peticiones HTTP. Piénsenlo como un mozo en un restaurante: vos le pedís algo
+(una petición), él va a la cocina (el backend procesa), y te trae la respuesta.
+En nuestro caso, la API maneja items — puede listarlos, crearlos, etc."
+
+"Lo interesante de nuestro proyecto es la combinación de tecnologías:
+- Rust, un lenguaje ultra-seguro y ultra-rápido
+- Actix Web, uno de los frameworks web más rápidos del mundo
+- Docker, que empaqueta todo para que funcione en cualquier máquina
+- MySQL, una base de datos confiable y popular"
+
+[TRANSICIÓN]:
+"Vamos a explicar cada tecnología y luego hacemos una demo en vivo.
+Yo les voy a contar sobre Rust y Docker, y después mi compañero les
+explica Actix Web y les muestra todo funcionando."
+
+
+================================================================================
+TU PARTE 2 — RUST (3 minutos)
+================================================================================
+
+[DECIR]:
+"Empecemos con Rust. Es un lenguaje creado por Mozilla en 2015. ¿Qué lo hace
+especial? Tres cosas principales:"
+
+"PRIMERO: Seguridad de memoria. La mayoría de los bugs críticos en software
+(el 70% según Microsoft) son errores de memoria: acceder a datos que ya no
+existen, escribir donde no se debe, etc. Rust PREVIENE todos estos errores
+ANTES de que el programa se ejecute, en tiempo de compilación. Es como tener
+un profesor que te corrige el examen antes de entregarlo."
+
+"SEGUNDO: No tiene Garbage Collector. Lenguajes como Java o Python usan un
+'recolector de basura' que periódicamente pausa el programa para limpiar
+memoria que ya no se usa. Rust usa un sistema llamado 'Ownership' (propiedad):
+cada dato tiene un único dueño, y cuando ese dueño desaparece, el dato se
+limpia automáticamente. Sin pausas."
+
+"TERCERO: Rendimiento. Rust compila a código máquina nativo, igual que C o C++.
+No necesita un 'intérprete' ni una 'máquina virtual'. El resultado es un
+archivo ejecutable que corre directísimo en el procesador."
+
+"¿Quién usa Rust? Discord reescribió sus servicios críticos en Rust y redujo
+el uso de CPU un 50%. Amazon lo usa para sus servicios en la nube. Microsoft
+está reescribiendo partes de Windows en Rust."
+
+[TRANSICIÓN]:
+"Ahora les cuento cómo empaquetamos todo esto con Docker."
+
+
+================================================================================
+TU PARTE 3 — DOCKER (3 minutos)
+================================================================================
+
+[DECIR]:
+"Docker resuelve un problema clásico: 'en mi máquina funciona'. ¿Cuántas
+veces les pasó que algo funciona en su computadora pero no en la del
+compañero? Docker elimina ese problema."
+
+"¿Cómo? Empaqueta tu aplicación con TODO lo que necesita para funcionar:
+el sistema operativo base, las librerías, las dependencias, el código...
+todo en un 'contenedor'. Ese contenedor funciona IGUAL en cualquier
+máquina que tenga Docker instalado."
+
+"Conceptos clave que usamos:
+- IMAGEN: Es como una receta. Define qué tiene el contenedor.
+- CONTENEDOR: Es la receta ejecutándose. Es una instancia viva.
+- DOCKERFILE: Es el archivo donde escribís la receta.
+- DOCKER COMPOSE: Permite levantar VARIOS contenedores a la vez.
+  Nosotros levantamos la base de datos Y el backend con UN solo comando."
+
+"En nuestro proyecto, Docker Compose orquesta dos contenedores:
+1. MySQL (la base de datos)
+2. El backend en Rust
+Ambos se comunican por una red interna que Docker crea automáticamente."
+
+
+================================================================================
+TU PARTE 4 — MULTI-STAGE BUILD (2 minutos)
+================================================================================
+
+[DECIR]:
+"Un detalle técnico importante: usamos un 'multi-stage build' en Docker.
+¿Qué es? El Dockerfile tiene DOS etapas:"
+
+"ETAPA 1: Usa una imagen pesada (1.5 GB) que tiene el compilador de Rust.
+Compila nuestro código y genera un binario ejecutable."
+
+"ETAPA 2: Usa una imagen mínima de Debian (80 MB). SOLO copia el binario
+de la etapa anterior. No tiene compilador, no tiene código fuente."
+
+"Resultado: nuestra imagen final pesa ~100 MB en vez de 1.5 GB.
+Es más rápida de descargar y más segura (menos superficie de ataque)."
+
+"También usamos variables de entorno para las credenciales. NUNCA ponemos
+contraseñas en el código. Se leen desde un archivo .env que Docker Compose
+carga automáticamente."
+
+[TRANSICIÓN — PASAR LA PALABRA]:
+"Bueno, eso es todo lo que respecta al lenguaje y a cómo se empaqueta.
+Ahora [nombre de tu compañero] les va a explicar cómo funciona el
+framework Actix Web y les va a hacer una demo en vivo."
+
+
+================================================================================
+================================================================================
+    TUS PREGUNTAS — Las que te pueden hacer a VOS
+================================================================================
+================================================================================
+
+Si te hacen una pregunta sobre Actix o MySQL, decí:
+"Esa la maneja mejor mi compañero" y le pasás la palabra.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 1 — BÁSICAS
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué es una API?
+R: Es como un intermediario entre dos programas. Permite que cualquier
+   aplicación le pida datos a nuestro servidor. Pensá en un enchufe: la API
+   es el enchufe estándar que permite conectar cualquier dispositivo.
+
+---
+
+P: ¿Qué es REST?
+R: Es un estilo de diseño para APIs. Define reglas:
+   - URLs para identificar recursos (ej: /items)
+   - Verbos HTTP para acciones (GET = obtener, POST = crear)
+   - Respuestas en JSON
+   Es como un idioma común para que los programas se entiendan.
+
+---
+
+P: ¿Por qué no usaron Python o JavaScript?
+R: Queríamos algo más desafiante y profesional. Rust se usa en Discord,
+   Amazon y Microsoft para sistemas críticos. Nos enseña conceptos
+   profundos que otros lenguajes esconden.
+
+---
+
+P: ¿Qué diferencia hay entre un contenedor y una máquina virtual?
+R: Una VM emula un computador COMPLETO (pesa gigas, tarda minutos).
+   Un contenedor comparte el kernel del host, solo aísla la app (pesa
+   megas, arranca en segundos). Como un departamento vs una casa entera.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 2 — INTERMEDIAS
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué es el sistema de Ownership de Rust?
+R: Es cómo Rust maneja memoria sin garbage collector. Tres reglas:
+   1. Cada valor tiene un único "dueño" (variable).
+   2. Solo puede haber un dueño a la vez.
+   3. Cuando el dueño sale del scope, el valor se destruye.
+   Así Rust sabe EXACTAMENTE cuándo liberar memoria, sin pausas.
+
+---
+
+P: ¿Qué es un multi-stage build y por qué lo usan?
+R: El Dockerfile tiene múltiples etapas. La primera compila (pesada).
+   La segunda toma SOLO el binario y lo pone en una imagen mínima.
+   Resultado: 100 MB en vez de 1.5 GB. Más segura y más rápida.
+
+---
+
+P: ¿Qué es un healthcheck en Docker?
+R: Un comando que Docker ejecuta periódicamente para verificar que un
+   contenedor funciona bien. MySQL tiene uno que hace "mysqladmin ping".
+   Nuestro backend usa "depends_on: healthy" para no arrancar hasta
+   que MySQL responda bien.
+
+---
+
+P: ¿Cómo manejan las variables de entorno?
+R: Archivo .env que Docker Compose lee automáticamente. En Rust usamos
+   std::env::var("NOMBRE") para leer valores. Si no existe, ponemos
+   un valor por defecto. Así cambiás configuración sin tocar código.
+
+---
+
+P: ¿Qué es Docker Compose y por qué no usan solo Docker?
+R: Docker solo maneja UN contenedor. Compose orquesta VARIOS juntos.
+   Define qué servicios levantar, cómo se conectan, en qué orden
+   arrancan y qué datos persisten. Todo con: docker compose up.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 3 — AVANZADAS (para profes)
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Cómo maneja Rust la concurrencia sin data races?
+R: Con dos traits: Send (se puede transferir entre hilos) y Sync (se
+   puede referenciar desde múltiples hilos). El compilador VERIFICA que
+   no haya dos hilos con datos mutables a la vez. Si lo intentás, no
+   compila. "Fearless concurrency."
+
+---
+
+P: ¿Cómo protegerían credenciales en producción?
+R: NUNCA .env en el servidor. Opciones:
+   - Kubernetes Secrets / Docker Swarm Secrets
+   - HashiCorp Vault
+   - AWS Secrets Manager / Azure Key Vault
+   El código sigue leyendo env vars, pero el origen cambia.
+   Además: TLS (HTTPS) y la BD sin puertos expuestos al exterior.
+
+---
+
+P: ¿Cómo manejan los errores en Rust? ¿panic! o Result?
+R: Result<T, E> siempre. Devuelve Ok(valor) o Err(error). Si la BD
+   falla, no se cae el servidor — devolvemos HTTP 500 descriptivo.
+   Usamos el operador ? para propagar errores elegantemente.
+   panic! solo para errores irrecuperables (casi nunca en nuestro caso).
+
+---
+
+P: ¿Por qué Rust es más difícil de aprender?
+R: El compilador es MUY estricto. Te obliga a definir dueños de datos,
+   manejar todos los errores, declarar tiempos de vida. Frustra al
+   principio, pero si compila, es muy probable que funcione bien.
+   Trade-off: más esfuerzo al escribir, menos bugs en producción.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 4 — TRAMPA
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué pasa si dos usuarios crean un item al mismo tiempo?
+R: No hay problema. Cada petición se procesa independientemente. El
+   connection pool da una conexión diferente a cada una. MySQL maneja
+   la concurrencia con transacciones. Los UUIDs no colisionan.
+
+
+================================================================================
+    CONSEJOS PARA VOS
+================================================================================
+
+• Hablá con seguridad. Si no sabés algo: "Eso excede el alcance del
+  proyecto, pero podríamos investigarlo como mejora futura."
+
+• Analogías que podés usar:
+  - Rust ownership = "un libro de biblioteca, solo uno lo tiene a la vez"
+  - Docker = "un tupper con toda la comida adentro, lo llevás a donde sea"
+  - Contenedor vs VM = "departamento vs casa entera"
+  - Multi-stage = "cocinar en una cocina industrial pero servir en un plato chico"
+
+• No leas. Mirá al público. Usá la web de apoyo visual.
+
+• Si te trabás, respirá y decí: "A ver, lo que quiero decir es..."
+
+================================================================================
+                         ¡ÉXITOS!
+================================================================================

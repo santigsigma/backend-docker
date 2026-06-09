@@ -1,0 +1,527 @@
+================================================================================
+       GUION DE PRESENTACIÓN — Backend REST API con Rust + Actix + Docker
+================================================================================
+
+Este archivo fue dividido en 2 archivos individuales para estudiar
+lado a lado:
+
+  → PERSONA_1_RUST_DOCKER.txt    (Introducción + Rust + Docker)
+  → PERSONA_2_ACTIX_MYSQL.txt    (Actix Web + MySQL + Demo + Cierre)
+
+Abran ambos archivos de lado a lado en el editor para estudiar.
+
+================================================================================
+
+================================================================================
+PARTE 1 — INTRODUCCIÓN (2 minutos)
+================================================================================
+
+[DECIR]:
+"Buenas tardes/días. Hoy les vamos a presentar nuestro proyecto: una API REST
+construida con Rust y Actix Web, que corre dentro de contenedores Docker y se
+conecta a una base de datos MySQL."
+
+"¿Qué es una API REST? Es un servicio que vive en un servidor y responde a
+peticiones HTTP. Piénsenlo como un mozo en un restaurante: vos le pedís algo
+(una petición), él va a la cocina (el backend procesa), y te trae la respuesta.
+En nuestro caso, la API maneja items — puede listarlos, crearlos, etc."
+
+"Lo interesante de nuestro proyecto es la combinación de tecnologías:
+- Rust, un lenguaje ultra-seguro y ultra-rápido
+- Actix Web, uno de los frameworks web más rápidos del mundo
+- Docker, que empaqueta todo para que funcione en cualquier máquina
+- MySQL, una base de datos confiable y popular"
+
+[TRANSICIÓN]:
+"Vamos a explicar cada tecnología y luego hacemos una demo en vivo."
+
+
+================================================================================
+PARTE 2 — RUST (3 minutos)
+================================================================================
+
+[DECIR]:
+"Empecemos con Rust. Es un lenguaje creado por Mozilla en 2015. ¿Qué lo hace
+especial? Tres cosas principales:"
+
+"PRIMERO: Seguridad de memoria. La mayoría de los bugs críticos en software
+(el 70% según Microsoft) son errores de memoria: acceder a datos que ya no
+existen, escribir donde no se debe, etc. Rust PREVIENE todos estos errores
+ANTES de que el programa se ejecute, en tiempo de compilación. Es como tener
+un profesor que te corrige el examen antes de entregarlo."
+
+"SEGUNDO: No tiene Garbage Collector. Lenguajes como Java o Python usan un
+'recolector de basura' que periódicamente pausa el programa para limpiar
+memoria que ya no se usa. Rust usa un sistema llamado 'Ownership' (propiedad):
+cada dato tiene un único dueño, y cuando ese dueño desaparece, el dato se
+limpia automáticamente. Sin pausas."
+
+"TERCERO: Rendimiento. Rust compila a código máquina nativo, igual que C o C++.
+No necesita un 'intérprete' ni una 'máquina virtual'. El resultado es un
+archivo ejecutable que corre directísimo en el procesador."
+
+"¿Quién usa Rust? Discord reescribió sus servicios críticos en Rust y redujo
+el uso de CPU un 50%. Amazon lo usa para sus servicios en la nube. Microsoft
+está reescribiendo partes de Windows en Rust."
+
+
+================================================================================
+PARTE 3 — ACTIX WEB (2 minutos)
+================================================================================
+
+[DECIR]:
+"Actix Web es el framework que usamos para crear el servidor web. Un framework
+es como un esqueleto: te da la estructura base y vos le ponés la lógica."
+
+"¿Qué lo hace especial? Es EXTREMADAMENTE rápido. En benchmarks independientes
+(TechEmpower), Actix maneja más de 10,000 peticiones por segundo. Para
+comparar, Express de Node.js maneja unas 5,000."
+
+"Además es asíncrono. Eso significa que cuando una petición está esperando
+que la base de datos responda, el servidor no se queda parado — atiende
+otras peticiones mientras tanto. Es como un mozo que no se queda esperando
+al lado de la cocina, sino que va atendiendo otras mesas."
+
+"Y usa muy poca memoria: entre 20 y 50 MB de RAM. Un servidor Node.js
+equivalente usa entre 80 y 120 MB."
+
+
+================================================================================
+PARTE 4 — DOCKER (3 minutos)
+================================================================================
+
+[DECIR]:
+"Docker resuelve un problema clásico: 'en mi máquina funciona'. ¿Cuántas
+veces les pasó que algo funciona en su computadora pero no en la del
+compañero? Docker elimina ese problema."
+
+"¿Cómo? Empaqueta tu aplicación con TODO lo que necesita para funcionar:
+el sistema operativo base, las librerías, las dependencias, el código...
+todo en un 'contenedor'. Ese contenedor funciona IGUAL en cualquier
+máquina que tenga Docker instalado."
+
+"Conceptos clave que usamos:
+- IMAGEN: Es como una receta. Define qué tiene el contenedor.
+- CONTENEDOR: Es la receta ejecutándose. Es una instancia viva.
+- DOCKERFILE: Es el archivo donde escribís la receta.
+- DOCKER COMPOSE: Permite levantar VARIOS contenedores a la vez.
+  Nosotros levantamos la base de datos Y el backend con UN solo comando."
+
+"En nuestro proyecto, Docker Compose orquesta dos contenedores:
+1. MySQL (la base de datos)
+2. El backend en Rust
+Ambos se comunican por una red interna que Docker crea automáticamente."
+
+
+================================================================================
+PARTE 5 — ARQUITECTURA DEL PROYECTO (2 minutos)
+================================================================================
+
+[DECIR]:
+"Veamos cómo está armado el proyecto."
+
+[SEÑALAR DIAGRAMA EN LA WEB O DIBUJAR]:
+"Tenemos Docker Compose manejando dos contenedores:
+- A la izquierda, MySQL corriendo en el puerto 3306
+- A la derecha, nuestro backend Rust corriendo en el puerto 8080
+- Ambos conectados por una red interna llamada 'app-network'"
+
+"El flujo es:
+1. Ejecutamos 'docker compose up' y se levantan ambos contenedores
+2. MySQL se inicializa con un script que crea la tabla 'items'
+3. El backend espera a que MySQL esté listo (tiene un healthcheck)
+4. Una vez conectado, el backend queda escuchando en el puerto 8080
+5. Nosotros hacemos peticiones HTTP desde la terminal con curl"
+
+"Algo importante: el backend NUNCA arranca si MySQL no está sano.
+Eso es un patrón de diseño llamado 'health check' — evita errores
+de conexión al inicio."
+
+
+================================================================================
+PARTE 6 — ENDPOINTS Y MULTI-STAGE BUILD (2 minutos)
+================================================================================
+
+[DECIR]:
+"Nuestra API tiene 4 endpoints — es decir, 4 direcciones URL a las que
+podés enviar peticiones:"
+
+"1. GET /health — Devuelve si la API está corriendo. No toca la BD.
+2. GET /db-status — Verifica que la conexión a MySQL funciona.
+3. GET /items — Lista todos los items guardados.
+4. POST /items — Crea un item nuevo (le mandás un nombre en JSON)."
+
+"Otro detalle técnico importante: usamos un 'multi-stage build' en Docker.
+¿Qué es? El Dockerfile tiene DOS etapas:
+
+ETAPA 1: Usa una imagen pesada (1.5 GB) que tiene el compilador de Rust.
+Compila nuestro código y genera un binario ejecutable.
+
+ETAPA 2: Usa una imagen mínima de Debian (80 MB). SOLO copia el binario
+de la etapa anterior. No tiene compilador, no tiene código fuente.
+
+Resultado: nuestra imagen final pesa ~100 MB en vez de 1.5 GB.
+Es más rápida de descargar y más segura (menos superficie de ataque)."
+
+
+================================================================================
+PARTE 7 — DEMO EN VIVO (4-5 minutos)
+================================================================================
+
+[DECIR]:
+"Ahora vamos a mostrar el proyecto funcionando."
+
+[EJECUTAR EN TERMINAL]:
+1. cd ~/backend-docker
+2. docker compose up --build -d
+   → Explicar: "Esto construye las imágenes y levanta los contenedores
+     en segundo plano."
+
+3. docker compose ps
+   → Explicar: "Acá vemos que ambos contenedores están corriendo."
+
+4. curl http://localhost:8080/health
+   → Explicar: "Le preguntamos a la API si está viva. Nos responde con
+     JSON: status 'API is running' y un timestamp."
+
+5. curl http://localhost:8080/db-status
+   → Explicar: "Ahora verificamos la conexión a MySQL. Nos dice
+     'Database connection successful'."
+
+6. curl http://localhost:8080/items
+   → Explicar: "Listamos los items. Hay 3 precargados que creó el
+     script init.sql."
+
+7. curl -X POST http://localhost:8080/items -H "Content-Type: application/json" -d '{"nombre":"Item creado en vivo"}'
+   → Explicar: "Creamos un item nuevo mandando un POST con JSON.
+     La API nos devuelve el item creado con su ID y timestamp."
+
+8. curl http://localhost:8080/items
+   → Explicar: "Si listamos de nuevo, ahora aparecen 4 items."
+
+9. docker compose down
+   → Explicar: "Con esto apagamos todo."
+
+
+================================================================================
+PARTE 8 — CIERRE (1 minuto)
+================================================================================
+
+[DECIR]:
+"Para cerrar, ¿por qué elegimos Rust en vez de algo más fácil como Node.js?
+Porque queríamos aprender una tecnología de nivel profesional que se usa en
+empresas grandes para sistemas críticos. Rust nos obliga a pensar mejor
+nuestro código, y el resultado es un programa más seguro, más rápido y más
+eficiente."
+
+"El proyecto demuestra que con las herramientas correctas — Docker para la
+infraestructura, Rust para el rendimiento, MySQL para los datos — se puede
+construir un backend profesional con un equipo chico."
+
+"¿Preguntas?"
+
+
+================================================================================
+================================================================================
+       SECCIÓN DE PREGUNTAS Y RESPUESTAS
+================================================================================
+================================================================================
+
+A continuación, preguntas organizadas de SIMPLE a COMPLEJO.
+Estudien todas, especialmente las de su nivel de comprensión.
+
+================================================================================
+NIVEL 1 — PREGUNTAS BÁSICAS (para público general)
+================================================================================
+
+P: ¿Qué es una API?
+R: Una API (Application Programming Interface) es como un intermediario entre
+   dos programas. En nuestro caso, permite que cualquier aplicación (una web,
+   una app móvil, o incluso la terminal) le pida datos a nuestro servidor.
+   Pensá en un enchufe: la API es el enchufe estándar que permite conectar
+   cualquier dispositivo a la electricidad.
+
+---
+
+P: ¿Qué es REST?
+R: REST es un estilo de diseño para APIs. Define reglas sobre cómo se
+   comunican los programas por internet. Las reglas principales son:
+   - Usar URLs para identificar recursos (ej: /items)
+   - Usar verbos HTTP para acciones (GET = obtener, POST = crear)
+   - Responder con formatos estándar como JSON
+   Es como un protocolo de comunicación: todos hablan el mismo "idioma".
+
+---
+
+P: ¿Qué es JSON?
+R: JSON (JavaScript Object Notation) es un formato de texto para representar
+   datos estructurados. Es como una tabla, pero en texto. Por ejemplo:
+   {"nombre": "Juan", "edad": 20}
+   Es el formato estándar para enviar y recibir datos en APIs web.
+
+---
+
+P: ¿Por qué no usaron un lenguaje más conocido como Python o JavaScript?
+R: Queríamos explorar algo diferente y más desafiante. Rust se usa en
+   empresas grandes como Amazon y Discord para sistemas donde la velocidad
+   y la seguridad son críticas. Aprender Rust nos da una ventaja diferencial
+   y nos enseña conceptos profundos de programación que otros lenguajes
+   esconden.
+
+---
+
+P: ¿Qué diferencia hay entre un contenedor y una máquina virtual?
+R: Una máquina virtual emula un computador COMPLETO con su propio sistema
+   operativo (pesa gigas, tarda minutos en arrancar). Un contenedor comparte
+   el kernel del host, solo aísla la aplicación (pesa megas, arranca en
+   segundos). Es como la diferencia entre alquilar una casa entera vs
+   alquilar un departamento en un edificio compartido.
+
+
+================================================================================
+NIVEL 2 — PREGUNTAS INTERMEDIAS (para público técnico)
+================================================================================
+
+P: ¿Qué es el sistema de Ownership de Rust?
+R: Es el mecanismo central de Rust para manejar memoria sin garbage collector.
+   Reglas:
+   1. Cada valor tiene un único "dueño" (variable).
+   2. Solo puede haber un dueño a la vez.
+   3. Cuando el dueño sale del scope, el valor se destruye automáticamente.
+   Esto permite que Rust sepa EXACTAMENTE cuándo liberar memoria, sin
+   necesidad de un recolector de basura que pause el programa.
+
+---
+
+P: ¿Qué es async/await y por qué lo usan?
+R: Async/await es un patrón para manejar operaciones que tardan (como leer
+   de una base de datos o hacer una petición de red) sin bloquear el hilo
+   de ejecución. Cuando una función "awaits" algo, el hilo queda libre para
+   hacer otras cosas. Actix usa Tokio como runtime asíncrono, que puede
+   manejar miles de conexiones simultáneas con muy pocos hilos.
+
+---
+
+P: ¿Qué es connection pooling?
+R: En vez de abrir y cerrar una conexión a la base de datos por cada
+   petición (que es lento), mantenemos un "pool" (grupo) de conexiones
+   abiertas y las reutilizamos. Es como tener varios teléfonos compartidos
+   en una oficina: cuando alguien termina de hablar, otro puede usar ese
+   teléfono sin tener que marcar de nuevo.
+
+---
+
+P: ¿Qué pasa si MySQL se cae mientras el backend está corriendo?
+R: El backend detectaría el error cuando intente usar una conexión del pool.
+   El endpoint /db-status devolvería un error. Los endpoints que no usan
+   la BD (/health) seguirían funcionando. Cuando MySQL vuelva, el pool
+   reconectaría automáticamente. Esto se llama "resiliencia".
+
+---
+
+P: ¿Qué es un healthcheck en Docker?
+R: Es un comando que Docker ejecuta periódicamente para verificar que un
+   contenedor está funcionando bien. En nuestro caso, MySQL tiene un
+   healthcheck que ejecuta "mysqladmin ping". Si falla, Docker marca el
+   contenedor como "unhealthy". Nuestro backend usa "depends_on" con
+   condición "healthy" para no arrancar hasta que MySQL responda bien.
+
+---
+
+P: ¿Cómo manejan las variables de entorno?
+R: Usamos un archivo .env que Docker Compose lee automáticamente. El código
+   Rust usa std::env::var("NOMBRE_VARIABLE") para leer los valores. Si la
+   variable no existe, usamos unwrap_or_else para poner un valor por defecto.
+   Esto permite cambiar configuración (contraseñas, puertos, etc.) sin
+   modificar el código.
+
+---
+
+P: ¿Qué es un multi-stage build y por qué lo usan?
+R: Es una técnica en Docker donde el Dockerfile tiene múltiples etapas
+   (FROM). La primera etapa compila el código (necesita compilador, libs,
+   etc. — todo pesado). La segunda etapa toma SOLO el resultado (el binario)
+   y lo pone en una imagen mínima. Ventajas:
+   - Imagen final mucho más chica (100 MB vs 1.5 GB)
+   - Más segura (no incluye herramientas de compilación)
+   - Más rápida de transferir y desplegar
+
+---
+
+P: ¿Qué es Docker Compose y por qué no usan solo Docker?
+R: Docker por sí solo maneja UN contenedor. Docker Compose orquesta VARIOS
+   contenedores que necesitan trabajar juntos. Con un archivo YAML definimos:
+   - Qué servicios levantar (MySQL + Backend)
+   - Cómo se conectan (networks)
+   - En qué orden arrancan (depends_on)
+   - Qué datos persisten (volumes)
+   Todo con un solo comando: docker compose up.
+
+
+================================================================================
+NIVEL 3 — PREGUNTAS AVANZADAS (para profesores o público experto)
+================================================================================
+
+P: ¿Cómo maneja Rust la concurrencia sin data races?
+R: El sistema de tipos de Rust tiene dos traits fundamentales:
+   - Send: un tipo puede transferirse entre hilos de forma segura.
+   - Sync: un tipo puede ser referenciado desde múltiples hilos.
+   El compilador VERIFICA en tiempo de compilación que no haya dos hilos
+   accediendo a datos mutables simultáneamente. Si intentás hacerlo,
+   el código directamente no compila. Es "fearless concurrency" — podés
+   programar concurrente sin miedo a bugs de threading.
+
+---
+
+P: ¿Qué runtime asíncrono usa Actix y cómo funciona?
+R: Actix usa Tokio, que es un runtime asíncrono multi-hilo. Funciona así:
+   - Tiene un pool de hilos del sistema operativo (generalmente = nro de CPUs)
+   - Las tareas async se ejecutan como "futures" en esos hilos
+   - Cuando una tarea hace await (ej: espera IO), se suspende y el hilo
+     toma otra tarea del queue
+   - Cuando el IO completa, la tarea se re-programa
+   Esto permite manejar miles de conexiones con pocos hilos (modelo M:N).
+
+---
+
+P: ¿Cómo escalarían este proyecto a producción?
+R: Varias mejoras necesarias:
+   1. Agregar un reverse proxy (Nginx/Traefik) delante del backend
+   2. Usar Docker Swarm o Kubernetes para orquestación multi-nodo
+   3. Implementar rate limiting y autenticación (JWT)
+   4. Agregar caching con Redis
+   5. Configurar réplicas de MySQL (read replicas)
+   6. Implementar logging centralizado (ELK stack)
+   7. Agregar métricas con Prometheus + Grafana
+   8. CI/CD con GitHub Actions para deploys automáticos
+
+---
+
+P: ¿Qué diferencia hay entre actix-web y otros frameworks Rust como Axum?
+R: Actix Web usa su propio sistema de actores (modelo de concurrencia) y
+   tiene un runtime propio sobre Tokio. Axum (de los creadores de Tokio)
+   es más "puro Tokio" y usa el sistema de tipos para extraer parámetros.
+   Actix tiene más madurez y más middlewares listos. Axum tiene una API
+   más ergonómica y mejor integración con el ecosistema Tower. Ambos son
+   excelentes opciones; elegimos Actix por su rendimiento comprobado y
+   documentación abundante.
+
+---
+
+P: ¿Cómo protegerían las credenciales en un entorno de producción?
+R: En producción NUNCA usaríamos un archivo .env en el servidor. Opciones:
+   1. Secrets de Docker Swarm / Kubernetes Secrets
+   2. Vault de HashiCorp (gestión centralizada de secretos)
+   3. AWS Secrets Manager / Azure Key Vault
+   4. Variables de entorno inyectadas por el CI/CD pipeline
+   El código seguiría leyendo env vars, pero el origen cambia. Además,
+   en producción usaríamos TLS (HTTPS) y la BD no expondría puertos
+   al exterior.
+
+---
+
+P: ¿Por qué usan UUID en vez de auto-increment para los IDs?
+R: UUID (Universally Unique Identifier) tiene ventajas en sistemas
+   distribuidos:
+   - No depende de una secuencia central (la BD)
+   - Se puede generar en el backend sin consultar la BD
+   - No revela información (un ID secuencial revela cuántos registros hay)
+   - Funciona bien en replicación multi-master
+   Desventaja: ocupa más espacio y es peor para índices que un int.
+   Para nuestro caso de uso, las ventajas superan las desventajas.
+
+---
+
+P: ¿Cómo manejan los errores en Rust? ¿Usan panic! o Result?
+R: En Rust hay dos formas de manejar errores:
+   - panic!: aborta el programa. Solo para errores irrecuperables.
+   - Result<T, E>: devuelve Ok(valor) o Err(error). Es recuperable.
+   Nosotros usamos Result en todo el código de la API. Si la BD falla,
+   no queremos que el servidor se caiga — devolvemos un error HTTP 500
+   con un mensaje descriptivo. Usamos el operador ? para propagar errores
+   de forma elegante y unwrap_or_else para valores por defecto.
+
+---
+
+P: ¿Qué es el modelo de actores que menciona Actix?
+R: El modelo de actores es un paradigma de concurrencia donde cada "actor"
+   es una unidad independiente que:
+   - Tiene su propio estado privado
+   - Se comunica solo mediante mensajes
+   - Procesa un mensaje a la vez
+   Esto elimina la necesidad de locks y mutexes. Actix Web hereda este
+   concepto de Actix (el framework de actores), aunque en versiones
+   recientes se puede usar sin actores explícitos, usando solo el
+   modelo async/await sobre Tokio.
+
+
+================================================================================
+NIVEL 4 — PREGUNTAS TRAMPA / EDGE CASES
+================================================================================
+
+P: ¿Qué pasa si dos usuarios crean un item al mismo tiempo?
+R: No hay problema. Cada petición se procesa de forma independiente.
+   El connection pool asigna una conexión diferente a cada una. MySQL
+   maneja la concurrencia internamente con su sistema de transacciones.
+   Los UUIDs se generan independientemente, así que no hay colisión.
+
+---
+
+P: ¿El proyecto tiene tests?
+R: [Si los tiene]: Sí, tenemos tests unitarios y de integración que
+   verifican los endpoints.
+   [Si no los tiene]: Es un área de mejora. Para producción agregaríamos
+   tests con actix-web::test que levanta un servidor de prueba y hace
+   peticiones reales contra él.
+
+---
+
+P: ¿Qué pasa si la tabla items no existe cuando el backend arranca?
+R: El script init.sql se ejecuta automáticamente cuando MySQL arranca
+   por primera vez. Crea la tabla y carga datos iniciales. Si por alguna
+   razón la tabla no existiera, los endpoints que hacen queries fallarían
+   con un error SQL, y el backend devolvería HTTP 500. El endpoint
+   /health seguiría funcionando porque no toca la BD.
+
+---
+
+P: ¿Por qué Rust es más difícil de aprender que otros lenguajes?
+R: Porque el compilador es MUY estricto. Te obliga a:
+   - Definir quién es dueño de cada dato
+   - Manejar TODOS los posibles errores explícitamente
+   - Declarar tiempos de vida de las referencias
+   Esto al principio frustra, pero el beneficio es que si tu código
+   compila, es muy probable que funcione correctamente. Es un trade-off:
+   más esfuerzo al escribir, menos bugs en producción.
+
+
+================================================================================
+CONSEJOS GENERALES PARA LA PRESENTACIÓN
+================================================================================
+
+1. HABLAR CON CONFIANZA: Si no sabés una respuesta, decí "Eso excede el
+   alcance del proyecto, pero podríamos investigarlo como mejora futura."
+
+2. USAR ANALOGÍAS: La gente entiende mejor con comparaciones cotidianas.
+   - API = mozo de restaurante
+   - Docker = tupper con comida completa
+   - Contenedor vs VM = departamento vs casa
+   - Connection pool = teléfonos compartidos
+
+3. NO LEER: Usá el sitio web como apoyo visual, no lean de la pantalla.
+
+4. DEMO EN VIVO: Si algo falla, tengan calma. Digan "Esto puede pasar
+   en desarrollo, vamos a ver el error y solucionarlo." Los profes
+   valoran más cómo reaccionás al error que el error en sí.
+
+5. DIVIDIR LA EXPOSICIÓN: Ya está dividida para 2 personas:
+   - Persona 1: Introducción + Rust + Docker + Multi-stage build
+   - Persona 2: Actix Web + Arquitectura + Demo en vivo + Cierre
+   (Ver la sección "DIVISIÓN DE ROLES" al inicio del documento)
+
+6. TIEMPO: No se pasen. 15-20 minutos de presentación + 5-10 de preguntas
+   es lo ideal. Si ven que se alargan, corten una sección.
+
+================================================================================
+                              ¡ÉXITOS CON LA EXPOSICIÓN!
+================================================================================

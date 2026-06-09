@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comandos - Backend Docker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; padding: 40px 20px; }
+        h1 { text-align: center; color: #00d4aa; font-size: 1.8rem; margin-bottom: 30px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .step { background: #16213e; border-left: 4px solid #00d4aa; padding: 14px 20px; margin-bottom: 12px; border-radius: 0 8px 8px 0; }
+        .step-number { color: #00d4aa; font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; }
+        .step code { color: #fff; font-size: 0.95rem; word-break: break-all; }
+        .step-desc { color: #888; font-size: 0.8rem; margin-top: 4px; }
+        .separator { border: none; border-top: 1px dashed #333; margin: 25px 0; }
+        .section-title { color: #ffcc00; font-size: 1rem; margin-bottom: 15px; }
+        h2 { color: #ff6b6b; font-size: 1.4rem; margin-bottom: 16px; margin-top: 40px; }
+        .concept { background: #16213e; padding: 12px 18px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #ff6b6b; }
+        .concept-rust { border-left-color: #ff6b6b; }
+        .concept-actix { border-left-color: #7c4dff; }
+        .concept b { color: #fff; }
+        .concept span { color: #aaa; font-size: 0.85rem; }
+        h2.actix { color: #7c4dff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Exposicion - Backend REST API con Docker</h1>
+
+        <h2>🦀 Que es Rust?</h2>
+        <div class="concept concept-rust"><b>Rust es un lenguaje de programacion de sistemas creado por Mozilla en 2015. Compila a codigo maquina nativo, lo que lo hace tan rapido como C/C++ pero con garantias de seguridad de memoria verificadas en tiempo de compilacion.</b></div>
+
+        <h2>🦀 Para que sirve Rust?</h2>
+        <div class="concept concept-rust"><b>Se usa para servidores web de alto rendimiento, herramientas CLI, sistemas operativos, blockchain y cualquier aplicacion donde se necesite velocidad y seguridad. Lo usan Discord, Cloudflare, Amazon y Microsoft.</b></div>
+
+        <h2>🦀 Conceptos clave de Rust</h2>
+        <div class="concept concept-rust"><b>Ownership (Propiedad)</b><br><span>Cada valor en Rust tiene un unico dueño. Cuando el dueño sale del scope (bloque de codigo), el valor se libera automaticamente de la memoria. Si intentas usar un valor despues de que se movio a otro dueño, el compilador te frena.</span></div>
+        <div class="concept concept-rust"><b>Sin Garbage Collector</b><br><span>Rust no tiene recolector de basura como Java o Go. La memoria se libera automaticamente gracias al sistema de Ownership. Esto significa que no hay pausas impredecibles en la ejecucion y el rendimiento es constante y predecible.</span></div>
+        <div class="concept concept-rust"><b>Compilacion estricta</b><br><span>El compilador de Rust es muy estricto: si tu codigo compila, probablemente funciona. Detecta errores de memoria, tipos incorrectos, accesos concurrentes peligrosos y referencias invalidas ANTES de que el programa se ejecute.</span></div>
+
+        <hr class="separator">
+
+        <h2 class="actix">⚡ Que es Actix Web?</h2>
+        <div class="concept concept-actix"><b>Actix Web es un framework web para Rust. Es uno de los frameworks mas rapidos del mundo segun benchmarks internacionales (TechEmpower). Permite crear APIs REST de alto rendimiento con muy poco consumo de recursos (~20-50 MB de RAM).</b></div>
+
+        <h2 class="actix">⚡ Para que sirve Actix Web?</h2>
+        <div class="concept concept-actix"><b>Sirve para crear APIs REST, microservicios, servidores WebSocket y cualquier backend HTTP donde la velocidad y la capacidad de manejar miles de conexiones simultaneas sean importantes. En nuestro proyecto lo usamos para exponer 4 endpoints que se conectan a MySQL.</b></div>
+
+        <h2 class="actix">⚡ Conceptos clave de Actix Web</h2>
+        <div class="concept concept-actix"><b>Actor Model (Modelo de Actores)</b><br><span>Actix usa internamente el modelo de actores: unidades independientes que se comunican por mensajes. Cada actor maneja su propio estado sin compartir memoria con otros, lo que evita problemas de concurrencia.</span></div>
+        <div class="concept concept-actix"><b>async/await (Asincronia)</b><br><span>Las funciones que manejan peticiones HTTP son asincronicas. Esto significa que pueden atender miles de conexiones simultaneas sin bloquear hilos del sistema. Se basa en el runtime Tokio.</span></div>
+        <div class="concept concept-actix"><b>HttpResponse</b><br><span>Es lo que devuelve cada endpoint. HttpResponse::Ok().json(data) devuelve un codigo 200 con datos en JSON. HttpResponse::InternalServerError() devuelve un 500 cuando algo falla.</span></div>
+        <div class="concept concept-actix"><b>Middleware</b><br><span>Son funciones que se ejecutan antes o despues de cada peticion HTTP. En nuestro proyecto usamos el middleware Logger que registra automaticamente cada request con su metodo, ruta, codigo de respuesta y tiempo de ejecucion.</span></div>
+
+        <hr class="separator">
+        <p class="section-title">INICIAR</p>
+        <div class="step"><div class="step-number">1</div><code>cd ~/backend-docker</code><div class="step-desc">Entrar a la carpeta del proyecto</div></div>
+        <div class="step"><div class="step-number">2</div><code>docker network create app-network</code><div class="step-desc">Crear la red interna para los contenedores</div></div>
+        <div class="step"><div class="step-number">3</div><code>docker run -d --name db-mysql --network app-network -e MYSQL_ROOT_PASSWORD=mysecurepassword -e MYSQL_DATABASE=dbapp -e MYSQL_USER=appuser -e MYSQL_PASSWORD=mysecurepassword -p 3307:3306 -v $(pwd)/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql mysql:8.0</code><div class="step-desc">Levantar MySQL</div></div>
+        <div class="step"><div class="step-number">4</div><code>docker build -t backend-rust ./rust-actix</code><div class="step-desc">Compilar la imagen del backend</div></div>
+        <div class="step"><div class="step-number">5</div><code>sleep 15</code><div class="step-desc">Esperar a que MySQL este listo</div></div>
+        <div class="step"><div class="step-number">6</div><code>docker run -d --name backend-rust --network app-network -e APP_HOST=0.0.0.0 -e APP_PORT=8080 -e DB_HOST=db-mysql -e DB_PORT=3306 -e DB_USER=appuser -e DB_PASSWORD=mysecurepassword -e DB_NAME=dbapp -e RUST_LOG=info -p 8080:8080 backend-rust</code><div class="step-desc">Levantar el backend</div></div>
+        <hr class="separator">
+        <p class="section-title">PROBAR</p>
+        <div class="step"><div class="step-number">7</div><code>docker ps</code><div class="step-desc">Ver contenedores corriendo</div></div>
+        <div class="step"><div class="step-number">8</div><code>curl http://localhost:8080/health</code><div class="step-desc">Verificar que la API corre</div></div>
+        <div class="step"><div class="step-number">9</div><code>curl http://localhost:8080/db-status</code><div class="step-desc">Verificar conexion a MySQL</div></div>
+        <div class="step"><div class="step-number">10</div><code>curl http://localhost:8080/items</code><div class="step-desc">Listar items</div></div>
+        <div class="step"><div class="step-number">11</div><code>curl -X POST http://localhost:8080/items -H "Content-Type: application/json" -d '{"nombre":"Item creado en clase"}'</code><div class="step-desc">Crear un item nuevo</div></div>
+        <div class="step"><div class="step-number">12</div><code>curl http://localhost:8080/items</code><div class="step-desc">Verificar que se creo</div></div>
+        <hr class="separator">
+        <p class="section-title">APAGAR</p>
+        <div class="step"><div class="step-number">13</div><code>docker stop backend-rust db-mysql</code><div class="step-desc">Detener contenedores</div></div>
+        <div class="step"><div class="step-number">14</div><code>docker rm backend-rust db-mysql</code><div class="step-desc">Eliminar contenedores</div></div>
+        <div class="step"><div class="step-number">15</div><code>docker network rm app-network</code><div class="step-desc">Eliminar la red</div></div>
+    </div>
+</body>
+</html>

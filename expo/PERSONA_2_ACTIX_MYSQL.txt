@@ -1,0 +1,346 @@
+================================================================================
+    PERSONA 2 — "El Framework y los Datos"
+    Tecnologías: ⚡ ACTIX WEB + 🐬 MYSQL
+================================================================================
+
+Tu rol: Tu compañero te pasa la palabra después de Docker. Vos explicás
+CÓMO funciona el servidor (Actix Web), cómo se conecta a MySQL, mostrás
+la arquitectura, los endpoints, y hacés la demo en vivo. Cerrás vos.
+
+Orden de tu exposición:
+  1. Actix Web (el framework)
+  2. MySQL + Arquitectura (cómo se conecta todo)
+  3. Endpoints (las rutas de la API)
+  4. Demo en vivo (ejecutar comandos)
+  5. Cierre + Comparación vs Node.js
+
+
+================================================================================
+TU PARTE 1 — ACTIX WEB (2 minutos)
+================================================================================
+
+[Tu compañero dice: "Ahora [tu nombre] les va a explicar cómo funciona
+el framework que usamos para el servidor." — Tomás la palabra.]
+
+[DECIR]:
+"Gracias. Actix Web es el framework que usamos para crear el servidor web.
+Un framework es como un esqueleto: te da la estructura base y vos le ponés
+la lógica."
+
+"¿Qué lo hace especial? Es EXTREMADAMENTE rápido. En benchmarks independientes
+(TechEmpower), Actix maneja más de 10,000 peticiones por segundo. Para
+comparar, Express de Node.js maneja unas 5,000."
+
+"Además es asíncrono. Eso significa que cuando una petición está esperando
+que la base de datos responda, el servidor no se queda parado — atiende
+otras peticiones mientras tanto. Es como un mozo que no se queda esperando
+al lado de la cocina, sino que va atendiendo otras mesas."
+
+"Y usa muy poca memoria: entre 20 y 50 MB de RAM. Un servidor Node.js
+equivalente usa entre 80 y 120 MB."
+
+"Algo que diferencia a Actix de otros frameworks es que tiene su propio
+sistema de actores — un modelo donde cada unidad tiene estado privado y se
+comunica por mensajes. Eso hace que cosas como WebSockets sean más naturales."
+
+
+================================================================================
+TU PARTE 2 — MYSQL + ARQUITECTURA (2 minutos)
+================================================================================
+
+[DECIR]:
+"Para los datos usamos MySQL 8.0, que también corre en un contenedor Docker.
+Se inicializa automáticamente con un script SQL que crea la tabla 'items'."
+
+[SEÑALAR DIAGRAMA EN LA WEB]:
+"Veamos la arquitectura. Docker Compose maneja dos contenedores:
+- A la izquierda, MySQL corriendo en el puerto 3306
+- A la derecha, nuestro backend Rust+Actix corriendo en el puerto 8080
+- Ambos conectados por una red interna llamada 'app-network'"
+
+"El flujo es:
+1. Ejecutamos 'docker compose up' y se levantan ambos contenedores
+2. MySQL ejecuta init.sql y crea la tabla con 3 items de ejemplo
+3. El backend espera a que MySQL esté sano (tiene un healthcheck)
+4. Una vez conectado, el backend queda escuchando en el puerto 8080
+5. Nosotros hacemos peticiones HTTP desde la terminal con curl"
+
+"Importante: el backend usa 'connection pooling' — mantiene varias
+conexiones abiertas a MySQL y las reutiliza. Es como tener varios
+teléfonos compartidos en una oficina."
+
+
+================================================================================
+TU PARTE 3 — ENDPOINTS (1 minuto)
+================================================================================
+
+[DECIR]:
+"Nuestra API tiene 4 endpoints — 4 direcciones URL:"
+
+"1. GET /health — Devuelve si la API está corriendo. No toca la BD.
+2. GET /db-status — Verifica que la conexión a MySQL funciona.
+3. GET /items — Lista todos los items guardados.
+4. POST /items — Crea un item nuevo. Le mandás un JSON con el nombre."
+
+"Ahora se los muestro funcionando."
+
+
+================================================================================
+TU PARTE 4 — DEMO EN VIVO (4-5 minutos)
+================================================================================
+
+[DECIR]:
+"Vamos a levantar el proyecto y probar cada endpoint."
+
+[EJECUTAR EN TERMINAL]:
+
+PASO 1:
+  $ cd ~/backend-docker
+  $ docker compose up --build -d
+
+  → Decir: "Esto construye las imágenes y levanta los contenedores
+    en segundo plano. La primera vez tarda 2-3 minutos por la
+    compilación de Rust."
+
+PASO 2:
+  $ docker compose ps
+
+  → Decir: "Acá vemos que ambos contenedores están corriendo: db-mysql
+    y backend-rust, ambos en estado healthy."
+
+PASO 3:
+  $ docker compose logs backend-rust
+
+  → Decir: "En los logs vemos 'Database connection pool created' y
+    'Starting server'. Está todo listo."
+
+PASO 4:
+  $ curl http://localhost:8080/health
+
+  → Decir: "Le preguntamos a la API si está viva. Nos responde con
+    JSON: status 'API is running' y un timestamp. Este endpoint NO
+    toca la base de datos."
+
+PASO 5:
+  $ curl http://localhost:8080/db-status
+
+  → Decir: "Ahora verificamos la conexión a MySQL. Dice 'Database
+    connection successful'. La BD está andando bien."
+
+PASO 6:
+  $ curl http://localhost:8080/items
+
+  → Decir: "Listamos los items. Hay 3 precargados que creó init.sql.
+    Cada uno tiene un ID (UUID), nombre, y timestamps."
+
+PASO 7:
+  $ curl -X POST http://localhost:8080/items -H "Content-Type: application/json" -d '{"nombre":"Item creado en vivo"}'
+
+  → Decir: "Creamos un item nuevo mandando un POST con JSON. La API
+    nos devuelve el item creado con un UUID generado automáticamente."
+
+PASO 8:
+  $ curl http://localhost:8080/items
+
+  → Decir: "Si listamos de nuevo, ahora dice 'total: 4'. Se creó bien."
+
+PASO 9:
+  $ docker compose down
+
+  → Decir: "Con esto apagamos todo limpiamente."
+
+
+================================================================================
+TU PARTE 5 — CIERRE + COMPARACIÓN (1 minuto)
+================================================================================
+
+[DECIR]:
+"Para cerrar, ¿por qué Rust + Actix en vez de Node.js + Express?
+Les dejo una comparación rápida:"
+
+"Rendimiento: Actix hace 10,000 peticiones/seg vs 5,000 de Express.
+Memoria: Actix usa 20-50 MB vs 80-120 MB de Node.
+Seguridad: En Rust los errores se detectan al compilar. En Node, en ejecución.
+Imagen Docker: La nuestra pesa 100 MB. Una de Node pesa 200 MB."
+
+"La contra: Rust es más difícil de aprender. Pero para sistemas de producción
+donde importa velocidad y seguridad, vale la pena."
+
+"El proyecto demuestra que con Docker + Rust + MySQL se puede armar un
+backend profesional con un equipo de dos personas."
+
+"¿Preguntas?"
+
+
+================================================================================
+================================================================================
+    TUS PREGUNTAS — Las que te pueden hacer a VOS
+================================================================================
+================================================================================
+
+Si te hacen una pregunta sobre Rust/Docker, decí:
+"Esa la maneja mejor mi compañero" y le pasás la palabra.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 1 — BÁSICAS
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué es JSON?
+R: Es un formato de texto para representar datos. Como una tabla pero en
+   texto. Ejemplo: {"nombre": "Juan", "edad": 20}. Es el estándar para
+   enviar y recibir datos en APIs web.
+
+---
+
+P: ¿Qué es una base de datos?
+R: Es donde se guardan los datos de forma permanente y organizada. MySQL
+   los guarda en tablas (como Excel) con filas y columnas. Nuestra tabla
+   "items" tiene columnas: id, nombre, created_at, updated_at.
+
+---
+
+P: ¿Qué es curl?
+R: Es un programa de terminal que permite hacer peticiones HTTP. Es como
+   un navegador pero sin interfaz gráfica. Le decís la URL y te muestra
+   la respuesta en texto. Lo usamos para probar la API.
+
+---
+
+P: ¿Qué significa "asíncrono"?
+R: Que el programa no se queda esperando cuando hace algo lento (como
+   consultar la BD). Mientras espera, atiende otras cosas. Como un mozo
+   que no espera al lado de la cocina: va atendiendo otras mesas.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 2 — INTERMEDIAS
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué es async/await y por qué lo usan?
+R: Es un patrón para manejar operaciones lentas sin bloquear el servidor.
+   Cuando una función "awaits" algo (ej: consulta a BD), el hilo queda
+   libre para otras cosas. Actix usa Tokio como runtime que maneja miles
+   de conexiones con pocos hilos.
+
+---
+
+P: ¿Qué es connection pooling?
+R: En vez de abrir/cerrar una conexión a MySQL por cada petición (lento),
+   mantenemos un grupo de conexiones abiertas y las reutilizamos. Como
+   teléfonos compartidos en una oficina.
+
+---
+
+P: ¿Qué pasa si MySQL se cae mientras el backend corre?
+R: Los endpoints que usan BD fallarían con error 500. Los que no la usan
+   (/health) seguirían bien. Cuando MySQL vuelva, el pool reconecta
+   automáticamente. Se llama "resiliencia".
+
+---
+
+P: ¿Qué es un healthcheck en Docker?
+R: Un comando que Docker ejecuta periódicamente para verificar que un
+   contenedor funciona. MySQL tiene: "mysqladmin ping". Si falla, Docker
+   lo marca "unhealthy". Nuestro backend espera a que esté "healthy"
+   antes de arrancar.
+
+---
+
+P: ¿Por qué usan UUID en vez de auto-increment?
+R: UUID (ID universal único) tiene ventajas:
+   - Se genera sin consultar la BD
+   - No revela cuántos registros hay
+   - Funciona en sistemas distribuidos
+   Desventaja: ocupa más espacio. Para nosotros, las ventajas ganan.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 3 — AVANZADAS (para profes)
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿Qué runtime asíncrono usa Actix y cómo funciona?
+R: Usa Tokio. Tiene un pool de hilos del OS (= nro de CPUs). Las tareas
+   async son "futures". Cuando una tarea hace await (espera IO), se
+   suspende y el hilo toma otra tarea. Cuando el IO completa, se
+   re-programa. Miles de conexiones con pocos hilos (modelo M:N).
+
+---
+
+P: ¿Qué es el modelo de actores de Actix?
+R: Cada "actor" es una unidad independiente con:
+   - Estado privado (nadie más lo toca)
+   - Comunicación solo por mensajes
+   - Procesa un mensaje a la vez
+   Elimina locks y mutexes. Aunque en versiones recientes se puede usar
+   Actix Web solo con async/await sin actores explícitos.
+
+---
+
+P: ¿Qué diferencia hay entre Actix Web y Axum?
+R: Actix tiene sistema de actores propio, más madurez y middlewares.
+   Axum (de los creadores de Tokio) es más "puro Tokio", usa tipos
+   para extraer parámetros. Elegimos Actix por rendimiento comprobado
+   y documentación abundante.
+
+---
+
+P: ¿Cómo escalarían a producción?
+R: Agregaríamos:
+   1. Reverse proxy (Nginx/Traefik)
+   2. Kubernetes para orquestación multi-nodo
+   3. Rate limiting + autenticación (JWT)
+   4. Cache con Redis
+   5. Réplicas de MySQL (read replicas)
+   6. Logging centralizado (ELK)
+   7. Métricas (Prometheus + Grafana)
+   8. CI/CD con GitHub Actions
+
+---
+
+P: ¿Qué pasa si la tabla items no existe cuando arranca?
+R: El init.sql se ejecuta al primer arranque de MySQL y la crea. Si
+   por alguna razón no existiera, los queries fallarían con error SQL
+   y el backend devolvería HTTP 500. El /health seguiría funcionando
+   porque no toca la BD.
+
+────────────────────────────────────────────────────────────────────────────────
+NIVEL 4 — TRAMPA
+────────────────────────────────────────────────────────────────────────────────
+
+P: ¿El proyecto tiene tests?
+R: [Si sí]: Sí, tests unitarios y de integración para los endpoints.
+   [Si no]: Es un área de mejora. Usaríamos actix-web::test que levanta
+   un servidor de prueba y hace peticiones reales.
+
+---
+
+P: ¿Qué pasa si mando un POST sin el campo "nombre"?
+R: Actix Web valida el JSON automáticamente (deserialización con Serde).
+   Si falta un campo obligatorio, devuelve HTTP 400 Bad Request con un
+   mensaje de error descriptivo. El servidor no se cae.
+
+
+================================================================================
+    CONSEJOS PARA VOS
+================================================================================
+
+• La demo es TU momento. Practicala antes. Tené los comandos anotados
+  o en un archivo listo para copiar/pegar.
+
+• Si algo falla en la demo, decí con calma: "Esto puede pasar en
+  desarrollo, veamos el error." Los profes valoran cómo reaccionás.
+
+• Analogías que podés usar:
+  - Actix = "un mozo ultra-rápido que atiende 10 mesas a la vez"
+  - Async = "no te quedás esperando, hacés otra cosa mientras"
+  - Connection pool = "teléfonos compartidos en una oficina"
+  - UUID = "DNI universal que no se repite nunca"
+
+• No leas. Mirá al público. Señalá la pantalla cuando mostrás la demo.
+
+• Si te trabás, respirá y decí: "A ver, lo que quiero decir es..."
+
+• Cuando termines la demo, cerrá con fuerza. Mirá al público y decí
+  "¿Preguntas?" con confianza.
+
+================================================================================
+                         ¡ÉXITOS!
+================================================================================
