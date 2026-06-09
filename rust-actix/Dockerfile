@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM rust:1.75 as builder
+FROM rust:latest as builder
 
 WORKDIR /app
 
@@ -15,8 +15,8 @@ RUN mkdir src && \
 # Copiar código fuente actual
 COPY src ./src
 
-# Construir el binario final
-RUN cargo build --release
+# Forzar recompilación del código fuente real
+RUN touch src/main.rs && cargo build --release
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim

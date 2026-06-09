@@ -1,0 +1,12 @@
+cd ~/backend-docker
+echo "DB_USER=appuser
+DB_PASSWORD=mysecurepassword
+DB_NAME=dbapp" > .env
+docker compose up --build -d
+docker compose ps
+curl http://localhost:8080/health
+curl http://localhost:8080/db-status
+curl http://localhost:8080/items
+curl -X POST http://localhost:8080/items -H "Content-Type: application/json" -d '{"nombre":"Item creado en clase"}'
+curl http://localhost:8080/items
+docker compose down

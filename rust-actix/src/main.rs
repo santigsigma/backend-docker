@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpResponse, HttpServer, middleware};
 use serde::{Deserialize, Serialize};
 use mysql::*;
+use mysql::prelude::Queryable;
 use std::sync::Mutex;
 use chrono::Local;
 
@@ -50,10 +51,8 @@ async fn db_status(db: web::Data<Mutex<PooledConn>>) -> HttpResponse {
     match db.lock() {
         Ok(mut conn) => {
             match conn.query::<String, _>("SELECT NOW() as db_time") {
-                Ok(mut result) => {
-                    let db_time = result.next()
-                        .and_then(|row| row.ok())
-                        .and_then(|row| row.get::<String, _>(0).ok());
+                Ok(result) => {
+                    let db_time = result.into_iter().next();
                     
                     let response = DbStatusResponse {
                         status: "Database connection successful".to_string(),
@@ -92,13 +91,13 @@ async fn db_status(db: web::Data<Mutex<PooledConn>>) -> HttpResponse {
 async fn get_items(db: web::Data<Mutex<PooledConn>>) -> HttpResponse {
     match db.lock() {
         Ok(mut conn) => {
-            match conn.query::<(u32, String, String), _>(
+            match conn.query::<(String, String, String), _>(
                 "SELECT id, nombre, created_at FROM items ORDER BY created_at DESC"
             ) {
                 Ok(result) => {
                     let items: Vec<Item> = result.iter()
                         .map(|(id, nombre, created_at)| Item {
-                            id: id.to_string(),
+                            id: id.clone(),
                             nombre: nombre.clone(),
                             created_at: created_at.clone(),
                         })

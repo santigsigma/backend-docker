@@ -9,7 +9,7 @@ actix-rt = "2.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.35", features = ["full"] }
-mysql = "24.1"
+mysql = "26"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15"
